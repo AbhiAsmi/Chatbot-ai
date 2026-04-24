@@ -1,51 +1,73 @@
-
 const input = document.querySelector('#input');
 const chatContainer = document.querySelector('#chat-container');
 const askBtn = document.querySelector('#ask');
 
+// Unique thread id
 const threadId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 
 input?.addEventListener('keyup', handleEnter);
 askBtn?.addEventListener('click', handleAsk);
 
+// Loading UI
 const loading = document.createElement('div');
-loading.className = 'my-6 animate-pulse';
+loading.className = 'my-6 animate-pulse text-gray-400';
 loading.textContent = 'Thinking...';
 
 async function generate(text) {
-    /**
-     * 1. append message to ui
-     * 2. Send it to the LLM
-     * 3. Append response to the ui
-     */
-    const msg = document.createElement('div');
-    msg.className = `my-6 bg-neutral-800 p-3 rounded-xl ml-auto max-w-fit`;
-    msg.textContent = text;
-    chatContainer?.appendChild(msg);
-    input.value = '';
+    try {
+        // User message
+        const msg = document.createElement('div');
+        msg.className = 'my-6 bg-neutral-800 p-3 rounded-xl ml-auto max-w-fit';
+        msg.textContent = text;
+        chatContainer?.appendChild(msg);
 
-    chatContainer?.appendChild(loading);
+        input.value = '';
 
-    // Call server
+        // Show loading
+        chatContainer?.appendChild(loading);
 
-    const assistantMessage = await callServer(text);
+        // Call backend
+        const assistantMessage = await callServer(text);
 
-    const assistantMsgElem = document.createElement('div');
-    assistantMsgElem.className = `max-w-fit`;
-    assistantMsgElem.textContent = assistantMessage;
+        // Bot response
+        const assistantMsgElem = document.createElement('div');
+        assistantMsgElem.className = 'max-w-fit bg-neutral-700 p-3 rounded-xl';
+        assistantMsgElem.textContent = assistantMessage;
 
-    loading.remove();
+        loading.remove();
+        chatContainer?.appendChild(assistantMsgElem);
 
-    chatContainer?.appendChild(assistantMsgElem);
+        // Auto scroll
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    } catch (error) {
+        console.error(error);
+
+        loading.remove();
+
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'text-red-500 my-4';
+        errorMsg.textContent = '⚠️ Something went wrong. Try again.';
+
+        chatContainer?.appendChild(errorMsg);
+    }
 }
 
+// Smart API URL (works locally + deployed)
 async function callServer(inputText) {
-    const response = await fetch('http://localhost:3000/chat', {
+    const BASE_URL = window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "";
+
+    const response = await fetch(`${BASE_URL}/chat`, {
         method: 'POST',
         headers: {
-            'content-type': 'application/json',
+            'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ threadId: threadId, message: inputText }),
+        body: JSON.stringify({
+            threadId: threadId,
+            message: inputText
+        }),
     });
 
     if (!response.ok) {
@@ -56,21 +78,19 @@ async function callServer(inputText) {
     return result.message;
 }
 
-async function handleAsk(e) {
+// Button click
+async function handleAsk() {
     const text = input?.value.trim();
-    if (!text) {
-        return;
-    }
+    if (!text) return;
 
     await generate(text);
 }
 
+// Enter key
 async function handleEnter(e) {
     if (e.key === 'Enter') {
         const text = input?.value.trim();
-        if (!text) {
-            return;
-        }
+        if (!text) return;
 
         await generate(text);
     }

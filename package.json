@@ -1,15 +1,16 @@
 {
   "name": "chatgpt",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "AI chatbot fullstack project",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "type": "module",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@tavily/core": "^0.7.2",
     "cors": "^2.8.6",
